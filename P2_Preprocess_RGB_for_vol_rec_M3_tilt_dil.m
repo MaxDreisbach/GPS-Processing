@@ -2,27 +2,46 @@ clear all
 clc
 close all
 
-Int_corr = 4;
-Int_corr_BG = 4;
-PLOT = false;
-PLOT2 = false;
-PLOT = true;
-PLOT2 = true;
-RUN_ON_CMD = true;
-offset = 1; %offset of image from ground (1px necessary to get closed mask)
-ground = 1;
-rot_angle = 0.65; %tilt angle of substrate in degrees
+%% Preprocess images for volumetric reconstruction
+% This script processes glare-point shadowgraphy images of droplets for volumetric reconstruction.
+% It applies spectral correction, crops and rotates images, and generates binary masks.
+% The output includes preprocessed RGB images and binary mask files.
+% 
+% Usage:
+% - Set `source_dir` to the directory containing input TIFF images.
+% - Configure parameters like `rot_angle` for substrate tilt correction.
+% - Enable `PLOT` and `PLOT2` flags for visualization of intermediate steps.
+% - Run the script in MATLAB; set `RUN_ON_CMD` to true for automated command-line usage.
+%
+% Dependencies:
+% - Requires `RGB_Correction_Matrix_measured.mat` for spectral correction.
+% - Uses `Spectral_reconstruction` function to correct RGB cross-talk.
+% - Relies on image processing functions for masking and morphological operations.
+%
+% Outputs:
+% - Preprocessed images and binary masks saved to `out_dir`.
+
+%% Configuration Parameters
+Int_corr = 4; % Intensity correction factor for reconstructed images
+Int_corr_BG = 4; % Intensity correction for background images
+PLOT = true; % Enable visualization of processing steps
+PLOT2 = true; % Enable detailed visualization
+RUN_ON_CMD = true; % Close MATLAB after execution (for command-line usage)
+offset = 1; % Image offset from ground (ensures mask closure)
+ground = 1; % Ground pixel offset
+rot_angle = 0.65; % Tilt angle of substrate in degrees
 
 %% Load Correction-Matrix
 C_dat = load('RGB_Correction_Matrix_measured.mat');
 C = cell2mat(struct2cell(C_dat));
-%
+
 %% Source: image path, image name
 source_dir = '../Data/15032023_water_PDMS_0 degree-1_C001H001S0001/';
 out = regexp(source_dir,'/','split');
 out_dir = ['../Preprocessed_dil/',cell2mat(out(end-1)),'_preprocessed/'];
 
-%% Get first image 
+
+%% Process First Image to Initialize
 images = dir([source_dir,'*.tif']);  % Vector of all image filenames
 Imax = imread([source_dir,images(1).name]);
 Imax = double(Imax)/2^12;
@@ -32,7 +51,8 @@ IBmax = imrotate(IBmax,rot_angle,'crop');
 IBmax = IBmax(40:end-20,:);
 
 
-%% Background
+%% Background Image Processing
+% Iterate through initial images to extract background estimate.
 for i = 1:5
     imgName = images(i).name;   
     I = imread([source_dir,imgName]);
@@ -51,6 +71,7 @@ for i = 1:5
     end
 end
 
+% Calculate average background intensities
 BG = Imax(1:end-100,:,:);
 RED_BG = mean(mean(BG(:,:,1)))/Int_corr_BG*Int_corr;
 GREEN_BG = mean(mean(BG(:,:,2)))/Int_corr_BG*Int_corr;
@@ -64,9 +85,10 @@ if PLOT2
     imshow(IBmax)
 end
 
+%% Process and Save All Images
 for i = 1:length(images)
     if PLOT
-        i=50;
+        i=50; % Debug: Process and visualize only one image
     end
     imgName = images(i).name;  
     
@@ -81,7 +103,7 @@ for i = 1:length(images)
     green_ch = I(:,:,2);
     blue_ch = I(:,:,3);
     
-    %% make the image square   
+    %% Create Square Image with Background Padding
     [height, width] = size(blue_ch);
     margin = abs(width-height);
     
@@ -95,7 +117,7 @@ for i = 1:length(images)
     
     I_square = cat(3,square_R,square_G,square_B);
     
-    %% Create mask
+    %% Create Binary Mask
     BG_mask = imcomplement(imbinarize(IBmax));
     BW = imbinarize(blue_ch*4);
     BW2 = imcomplement(BW);
@@ -113,7 +135,7 @@ for i = 1:length(images)
         imshow(BW5)
     end
     
-    %Morphological opening
+    % Morphological opening for noise reduction
     se = strel('disk',4,4);
     Mask_d = imerode(Mask_d, se);
     Mask_d = imdilate(Mask_d, se);
@@ -178,8 +200,9 @@ for i = 1:length(images)
     i 
 end
 
-%close matlab in command line mode
+
 if RUN_ON_CMD
+    %close matlab in command line mode
     id  = feature('getpid');
     if ispc
       cmd = sprintf('Taskkill /PID %d /F',id);
@@ -191,42 +214,67 @@ if RUN_ON_CMD
     system(cmd);
 end
 
+
+%% Function: plotCorrection
 function [] = plotCorrection(color, RED, GREEN, BLUE, red_ch, green_ch, blue_ch)
+% This helper function visualizes the results and errors of the 
+% color correction for a specified color channel (red, green, or blue).
+%
+% Inputs:
+%   color    - (string) Specifies the color channel to visualize. Valid
+%              values are "red", "green", or "blue".
+%   RED      - (2D matrix) Corrected intensity values for the red channel.
+%   GREEN    - (2D matrix) Corrected intensity values for the green channel.
+%   BLUE     - (2D matrix) Corrected intensity values for the blue channel.
+%   red_ch   - (2D matrix) Original intensity values for the red channel.
+%   green_ch - (2D matrix) Original intensity values for the green channel.
+%   blue_ch  - (2D matrix) Original intensity values for the blue channel.
 
-if color == "red"
-    figure('Name','Measured Data','NumberTitle','off');
-    imshow(RED)
-    figure('Name','Measured Data','NumberTitle','off');
-    imshow(red_ch)
-    figure('Name','Measured Data','NumberTitle','off');
-    imshow((red_ch-RED))
+    if color == "red"
+        figure('Name','input','NumberTitle','off');
+        imshow(RED)
+        figure('Name','color-corrected','NumberTitle','off');
+        imshow(red_ch)
+        figure('Name','error','NumberTitle','off');
+        imshow((red_ch-RED))
+    end
+    
+    if color == "green"
+        figure('Name','input','NumberTitle','off');
+        imshow(GREEN)
+        figure('Name','color-corrected','NumberTitle','off');
+        imshow(green_ch)
+        figure('Name','error','NumberTitle','off');
+        imshow((green_ch-GREEN))
+    end
+    
+    if color == "blue"
+        figure('Name','input','NumberTitle','off');
+        imshow(BLUE)
+        figure('Name','color-corrected','NumberTitle','off');
+        imshow(blue_ch)
+        figure('Name','error','NumberTitle','off');
+        imshow((blue_ch-BLUE))
+    end
 end
 
-if color == "green"
-    figure('Name','Measured Data','NumberTitle','off');
-    imshow(GREEN)
-    figure('Name','Measured Data','NumberTitle','off');
-    imshow(green_ch)
-    figure('Name','Measured Data','NumberTitle','off');
-    imshow((green_ch-GREEN))
-end
-
-if color == "blue"
-    figure('Name','Measured Data','NumberTitle','off');
-    imshow(BLUE)
-    figure('Name','Measured Data','NumberTitle','off');
-    imshow(blue_ch)
-    figure('Name','Measured Data','NumberTitle','off');
-    imshow((blue_ch-BLUE))
-end
-
-
-end
 
 
 function [I_rec] = Spectral_reconstruction(I,C,Int_corr)
-    %This method performs a spectral correction of the input image I with
-    %the correction Matrix C
+    % This function adjusts the color intensities of an input RGB image
+    % using a correction matrix to account for cross-talk. It scales
+    % the corrected image channels to ensure consistency in intensity levels.
+    %
+    % Inputs:
+    %   I        - (HxWx3 double) Input RGB image, normalized to [0, 1].
+    %   C        - (3x3 double) Correction matrix for spectral correction.
+    %              Each element represents the contribution of one light 
+    %              source to an image channel.
+    %   Int_corr - (double) Intensity correction factor
+    %
+    % Outputs:
+    %   I_rec    - (HxWx3 double) Spectrally corrected RGB image, with intensity
+    %              values adjusted and scaled to maintain consistency.
     
     red_ch = I(:,:,1)*Int_corr;
     green_ch = I(:,:,2)*Int_corr;
@@ -251,7 +299,7 @@ function [I_rec] = Spectral_reconstruction(I,C,Int_corr)
     GREEN = GREEN/f_green;
     BLUE = BLUE/f_blue;
 
-    %% Reconstruct RGB-image
+    %% Reconstruct the corrected RGB image
     I_rec(:,:,1) = RED;
     I_rec(:,:,2) = GREEN;
     I_rec(:,:,3) = BLUE;

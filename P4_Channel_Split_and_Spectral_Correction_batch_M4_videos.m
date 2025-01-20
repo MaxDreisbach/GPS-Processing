@@ -1,12 +1,18 @@
-%% Performs spectral corrrection of glare-point shadowgraphy images and creates videos for the bottom and side views
-
 clear all
 clc
 close all
 
-Int_corr = 4;
+%% Spectral Correction and Video Creation for Shadowgraphy Images
+% This script performs spectral correction on glare-point shadowgraphy
+% images and generates videos for different views (bottom, GP, and side).
+%
+% Dependencies:
+% - Requires file with correction matrix
 
-%% Source: image path, image name
+%% Configuration Parameters
+Int_corr = 4; % Intensity correction factor for reconstructed images
+
+%% Source and Output Directories
 source_dir = '../';
 out_dir = '../videos/';
 
@@ -19,7 +25,7 @@ C_dat = load('RGB_Correction_Matrix_measured.mat');
 C = cell2mat(struct2cell(C_dat))
 
 
-%Iterate over subfolders
+%% Iterate Through Subfolders and Process Images
 D = dir(source_dir);
 for k = 3:length(D) 
     sfol = D(k).name
@@ -28,19 +34,19 @@ for k = 3:length(D)
     images = dir([fullpath,'*.tif']);  % Vector of all image filenames
     clearvars I I_rec red_ch green_ch blue_ch RED GREEN BLUE
     
-    %% Initialize output video
+    %% Initialize output videos
     videoRGB = VideoWriter([out_dir strcat(sfol,'_RGB.avi')],'Motion JPEG AVI'); %create the video object
     videoR = VideoWriter([out_dir strcat(sfol,'_below.avi')],'Motion JPEG AVI'); 
     videoG = VideoWriter([out_dir strcat(sfol,'_GP.avi')],'Motion JPEG AVI'); 
     videoB = VideoWriter([out_dir strcat(sfol,'_side.avi')],'Motion JPEG AVI'); 
-    v.Quality = 100;
-    v.FrameRate = 30;
+    %v.Quality = 100;
+    %v.FrameRate = 30;
     open(videoRGB); %open the file for writing
     open(videoR); %open the file for writing
     open(videoG); %open the file for writing
     open(videoB); %open the file for writing
     
-
+    %% Process Each Image
     for i = 1:length(images)
         imgName = images(i).name;   
         
@@ -88,40 +94,52 @@ for k = 3:length(D)
         
        i
     end
-    close(videoRGB); %close the file
-    close(videoR); %close the file
-    close(videoG); %close the file
-    close(videoB); %close the file
+     %close the video files
+    close(videoRGB);
+    close(videoR);
+    close(videoG);
+    close(videoB);
 end
 
-
-
+%% Function: plotCorrection
 function [] = plotCorrection(color, RED, GREEN, BLUE, red_ch, green_ch, blue_ch)
+% This helper function visualizes the results and errors of the 
+% color correction for a specified color channel (red, green, or blue).
+%
+% Inputs:
+%   color    - (string) Specifies the color channel to visualize. Valid
+%              values are "red", "green", or "blue".
+%   RED      - (2D matrix) Corrected intensity values for the red channel.
+%   GREEN    - (2D matrix) Corrected intensity values for the green channel.
+%   BLUE     - (2D matrix) Corrected intensity values for the blue channel.
+%   red_ch   - (2D matrix) Original intensity values for the red channel.
+%   green_ch - (2D matrix) Original intensity values for the green channel.
+%   blue_ch  - (2D matrix) Original intensity values for the blue channel.
 
     if color == "red"
-        figure('Name','Measured Data','NumberTitle','off');
+        figure('Name','input','NumberTitle','off');
         imshow(RED)
-        figure('Name','Measured Data','NumberTitle','off');
+        figure('Name','color-corrected','NumberTitle','off');
         imshow(red_ch)
-        figure('Name','Measured Data','NumberTitle','off');
+        figure('Name','error','NumberTitle','off');
         imshow((red_ch-RED))
     end
     
     if color == "green"
-        figure('Name','Measured Data','NumberTitle','off');
+        figure('Name','input','NumberTitle','off');
         imshow(GREEN)
-        figure('Name','Measured Data','NumberTitle','off');
+        figure('Name','color-corrected','NumberTitle','off');
         imshow(green_ch)
-        figure('Name','Measured Data','NumberTitle','off');
+        figure('Name','error','NumberTitle','off');
         imshow((green_ch-GREEN))
     end
     
     if color == "blue"
-        figure('Name','Measured Data','NumberTitle','off');
+        figure('Name','input','NumberTitle','off');
         imshow(BLUE)
-        figure('Name','Measured Data','NumberTitle','off');
+        figure('Name','color-corrected','NumberTitle','off');
         imshow(blue_ch)
-        figure('Name','Measured Data','NumberTitle','off');
+        figure('Name','error','NumberTitle','off');
         imshow((blue_ch-BLUE))
     end
 end
