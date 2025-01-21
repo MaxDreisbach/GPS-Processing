@@ -1,5 +1,5 @@
 # GPS-Processing
-Image processing for glare-point shadowgraphy experiments (code)
+Image processing for glare-point shadowgraphy experiments (code) \
 by Maximilian Dreisbach (Institute of Fluid Mechanics (ISTM) - Karlsruhe Institute of Technology (KIT))
 
 This code repository contains scripts for the processing of images obtained by the glare-point shadowgraphy technique as presented in the research article "Three-dimensional encoding of a gas–liquid interface by means of color-coded glare points" (https://doi.org/10.1007/s00348-023-03592-0).
