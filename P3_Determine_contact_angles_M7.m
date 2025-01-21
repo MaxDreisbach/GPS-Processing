@@ -9,7 +9,8 @@ close all
 % 1. Ground detection and frame of impact determination.
 % 2. Ellipse fitting to the droplet contour for size and position estimation.
 % 3. Computation of dynamic properties like Weber, Reynolds, Ohnesorge, and Bond numbers.
-% 4. Contact angle and contact line position evaluation over time and plotting results.
+% 4. Contact angle and contact line position evaluation over time.
+% 5. Plotting of the results
 % 
 % Dependencies:
 % - Requires custom function: EllipseFitByTaubin
