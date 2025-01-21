@@ -21,7 +21,7 @@ The key steps include:
   2. Ellipse fitting to the droplet contour for size and position estimation.
   3. Computation of dimensionless numbers (Weber, Reynolds, Ohnesorge, and Bond numbers).
   4. Contact angle and contact line position evaluation over time
-  5.  plotting of the results.
+  5. Plotting of the results.
 
 # Spectral Correction and Video Creation for Shadowgraphy Images: P4_Channel_Split_and_Spectral_Correction_batch_M4_videos.m
 This script performs spectral correction on glare-point shadowgraphy images and generates videos for different views (bottom, side, glare points only).
