@@ -8,7 +8,7 @@ Example datasets from droplet impingement experiments are available here: https:
 If you have any questions regarding this code, please feel free to contact Maximilian (maximilian.dreisbach@kit.edu).
 
 
-# In-situ Color Correction: P1_Extract_ISC_correction_matrix.m
+# In-situ color correction: P1_Extract_ISC_correction_matrix.m
 This script constructs a transfer matrix for in-situ RGB correction using images captured under red, green, and blue illuminations. It calculates a correction matrix and applies it to a test image for spectral reconstruction. Corrected and original images are visualized and saved.
 
 # Image preprocessing for volumetric reconstruction: P2_Preprocess_RGB_for_vol_rec_M3_tilt_dil.m
@@ -23,5 +23,5 @@ The key steps include:
   4. Contact angle and contact line position evaluation over time
   5. Plotting of the results.
 
-# Spectral Correction and Video Creation for Shadowgraphy Images: P4_Channel_Split_and_Spectral_Correction_batch_M4_videos.m
+# Spectral correction and video creation: P4_Channel_Split_and_Spectral_Correction_batch_M4_videos.m
 This script performs spectral correction on glare-point shadowgraphy images and generates videos for different views (bottom, side, glare points only).
